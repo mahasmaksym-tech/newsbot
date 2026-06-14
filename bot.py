@@ -8,7 +8,7 @@ SEND_HOUR=int(os.environ.get("SEND_HOUR","8"))
 STARS_PRICE=100
 ALL_TOPICS={"world":("🌍","Світові новини"),"ukraine":("🇺🇦","Україна"),"usa":("🇺🇸","США та політика"),"tech":("💻","Технології та AI"),"military":("⚔️","Військо та геополітика"),"business":("📈","Бізнес та економіка"),"science":("🔬","Наука"),"sport":("⚽","Спорт")}
 FREE_TOPICS_LIMIT=2
-DB_PATH=os.environ.get("DB_PATH","newsbot.db")
+DB_PATH="newsbot.db"
 
 def get_db():
     conn=sqlite3.connect(DB_PATH);conn.row_factory=sqlite3.Row;return conn
