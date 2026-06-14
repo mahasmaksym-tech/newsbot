@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PossNews</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --bg: #0f0f0f;
+    --bg2: #1a1a1a;
+    --bg3: #232323;
+    --text: #ffffff;
+    --text2: rgba(255,255,255,0.55);
+    --text3: rgba(255,255,255,0.28);
+    --border: rgba(255,255,255,0.07);
+    --accent: #fac775;
+    --radius: 14px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    max-width: 480px;
+    margin: 0 auto;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px 10px;
+    border-bottom: 0.5px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(15,15,15,0.95);
+    backdrop-filter: blur(12px);
+    z-index: 10;
+  }
+  .logo { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+  .date { font-size: 12px; color: var(--text3); }
+
+  /* TABS */
+  .tabs-wrap {
+    position: sticky;
+    top: 45px;
+    background: rgba(15,15,15,0.95);
+    backdrop-filter: blur(12px);
+    z-index: 9;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .tabs {
+    display: flex;
+    gap: 6px;
+    padding: 10px 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 13px;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    background: rgba(255,255,255,0.07);
+    color: var(--text2);
+  }
+  .tab.active { background: #fff; color: #111; }
+
+  /* FEED */
+  .feed { padding: 10px 0 90px; }
+
+  /* BIG CARD */
+  .card-big {
+    margin: 0 16px 10px;
+    background: var(--bg2);
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    border: 0.5px solid var(--border);
+    active-transform: scale(0.98);
+  }
+  .card-big:active { opacity: 0.8; }
+  .card-img {
+    width: 100%;
+    height: 170px;
+    background: #1a2a3a;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card-img img { width: 100%; height: 100%; object-fit: cover; }
+  .card-img-fallback { font-size: 40px; opacity: 0.35; }
+  .tag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .tag-world { background: rgba(55,138,221,0.25); color: #85b7eb; }
+  .tag-ukraine { background: rgba(255,213,0,0.18); color: #ffd700; }
+  .tag-military { background: rgba(186,117,23,0.28); color: #fac775; }
+  .tag-tech { background: rgba(29,158,117,0.28); color: #5dcaa5; }
+  .tag-business { background: rgba(99,153,34,0.25); color: #97c459; }
+  .tag-science { background: rgba(83,74,183,0.25); color: #afa9ec; }
+  .tag-sport { background: rgba(212,83,126,0.25); color: #ed93b1; }
+  .tag-usa { background: rgba(226,75,74,0.22); color: #f09595; }
+
+  .card-body { padding: 12px 14px 14px; }
+  .card-title { font-size: 14px; font-weight: 600; line-height: 1.45; color: var(--text); margin-bottom: 6px; }
+  .card-desc { font-size: 12px; color: var(--text2); line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+  .card-time { font-size: 11px; color: var(--text3); }
+  .card-source { font-size: 11px; color: var(--text3); font-weight: 500; }
+
+  /* SMALL CARD */
+  .card-small {
+    margin: 0 16px 8px;
+    background: var(--bg2);
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    border: 0.5px solid var(--border);
+  }
+  .card-small:active { opacity: 0.8; }
+  .card-small-inner { display: flex; gap: 12px; padding: 12px 14px; align-items: flex-start; }
+  .card-thumb {
+    width: 70px;
+    height: 70px;
+    background: #1a2a3a;
+    border-radius: 10px;
+    flex-shrink: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .card-thumb-fallback { font-size: 22px; opacity: 0.4; }
+  .card-small-content { flex: 1; min-width: 0; }
+  .card-small-tag { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.05em; display: inline-block; margin-bottom: 5px; }
+  .card-small-title { font-size: 13px; font-weight: 600; line-height: 1.4; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 4px; }
+  .card-small-meta { font-size: 11px; color: var(--text3); }
+
+  /* SECTION LABEL */
+  .section-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; padding: 12px 16px 6px; }
+
+  /* PREMIUM BANNER */
+  .premium-banner {
+    margin: 0 16px 10px;
+    background: linear-gradient(135deg, #1e1a2e, #2a1810);
+    border-radius: var(--radius);
+    padding: 14px;
+    border: 0.5px solid rgba(250,199,117,0.2);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+  }
+  .premium-banner:active { opacity: 0.85; }
+  .premium-icon { font-size: 24px; flex-shrink: 0; }
+  .premium-text { flex: 1; }
+  .premium-title { font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 2px; }
+  .premium-desc { font-size: 11px; color: rgba(250,199,117,0.55); }
+  .premium-btn {
+    font-size: 11px;
+    font-weight: 700;
+    background: rgba(250,199,117,0.12);
+    color: var(--accent);
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 0.5px solid rgba(250,199,117,0.3);
+    flex-shrink: 0;
+  }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: 480px;
+    margin: 0 auto;
+    background: rgba(15,15,15,0.96);
+    backdrop-filter: blur(16px);
+    border-top: 0.5px solid var(--border);
+    display: flex;
+    padding: 10px 0;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    z-index: 100;
+  }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; opacity: 0.35; transition: opacity 0.15s; padding: 4px 0; }
+  .nav-item.active { opacity: 1; }
+  .nav-icon { font-size: 22px; line-height: 1; }
+  .nav-label { font-size: 10px; font-weight: 500; color: var(--text2); }
+
+  /* SETTINGS PANEL */
+  .panel { display: none; padding: 16px; }
+  .panel.active { display: block; }
+  .panel-title { font-size: 17px; font-weight: 700; margin-bottom: 16px; }
+  .topics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .topic-card {
+    background: var(--bg2);
+    border-radius: var(--radius);
+    padding: 14px;
+    border: 0.5px solid var(--border);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .topic-card.selected { border-color: rgba(255,255,255,0.35); background: var(--bg3); }
+  .topic-emoji { font-size: 20px; }
+  .topic-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .free-limit { font-size: 11px; color: var(--text3); margin-top: 12px; text-align: center; }
+  .save-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    margin-top: 16px;
+    background: #fff;
+    color: #111;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* LOADING */
+  .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 0; gap: 12px; }
+  .spinner { width: 24px; height: 24px; border: 2px solid rgba(255,255,255,0.1); border-top-color: rgba(255,255,255,0.6); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 13px; color: var(--text3); }
+
+  /* EMPTY */
+  .empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; gap: 10px; text-align: center; }
+  .empty-icon { font-size: 40px; opacity: 0.4; }
+  .empty-text { font-size: 14px; color: var(--text2); }
+  .empty-sub { font-size: 12px; color: var(--text3); }
+
+  /* ARTICLE VIEW */
+  .article-view { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 200; overflow-y: auto; max-width: 480px; margin: 0 auto; }
+  .article-view.open { display: block; }
+  .article-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 0.5px solid var(--border); position: sticky; top: 0; background: rgba(15,15,15,0.95); backdrop-filter: blur(12px); }
+  .back-btn { font-size: 20px; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--bg2); border-radius: 8px; }
+  .article-source { font-size: 13px; color: var(--text2); font-weight: 500; }
+  .article-img { width: 100%; height: 200px; background: #1a2a3a; display: flex; align-items: center; justify-content: center; }
+  .article-img img { width: 100%; height: 100%; object-fit: cover; }
+  .article-content { padding: 16px; }
+  .article-tag { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.05em; display: inline-block; margin-bottom: 12px; }
+  .article-title { font-size: 20px; font-weight: 700; line-height: 1.35; margin-bottom: 10px; letter-spacing: -0.3px; }
+  .article-meta { font-size: 12px; color: var(--text3); margin-bottom: 16px; }
+  .article-body { font-size: 15px; color: rgba(255,255,255,0.8); line-height: 1.7; }
+  .article-body p { margin-bottom: 14px; }
+  .read-more-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    margin-top: 8px;
+    background: var(--bg2);
+    color: var(--text);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+  }
+</style>
+</head>
+<body>
+
+<div id="main">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">📰 PossNews</div>
+    <div class="date" id="header-date"></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-wrap" id="tabs-wrap">
+    <div class="tabs" id="tabs-bar"></div>
+  </div>
+
+  <!-- FEED -->
+  <div class="feed" id="feed-panel">
+    <div id="feed-content"><div class="loading"><div class="spinner"></div><div class="loading-text">Завантажуємо новини…</div></div></div>
+  </div>
+
+  <!-- SETTINGS PANEL -->
+  <div class="panel" id="settings-panel">
+    <div class="panel-title">Налаштування</div>
+    <div style="font-size:13px; color:var(--text2); margin-bottom:14px;">Обери теми для брифінгу (безкоштовно 2):</div>
+    <div class="topics-grid" id="topics-grid"></div>
+    <div class="free-limit" id="topics-limit-msg"></div>
+    <button class="save-btn" onclick="saveTopics()">Зберегти</button>
+  </div>
+
+  <!-- SAVED PANEL -->
+  <div class="panel" id="saved-panel">
+    <div class="panel-title">Збережені</div>
+    <div id="saved-list"><div class="empty"><div class="empty-icon">🔖</div><div class="empty-text">Немає збережених</div><div class="empty-sub">Натисни на картку і збережи</div></div></div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="showTab('feed')" id="nav-feed">
+      <div class="nav-icon">📰</div>
+      <div class="nav-label">Стрічка</div>
+    </div>
+    <div class="nav-item" onclick="showTab('saved')" id="nav-saved">
+      <div class="nav-icon">🔖</div>
+      <div class="nav-label">Збережені</div>
+    </div>
+    <div class="nav-item" onclick="showTab('settings')" id="nav-settings">
+      <div class="nav-icon">⚙️</div>
+      <div class="nav-label">Налаштування</div>
+    </div>
+  </div>
+</div>
+
+<!-- ARTICLE VIEW -->
+<div class="article-view" id="article-view">
+  <div class="article-header">
+    <div class="back-btn" onclick="closeArticle()">←</div>
+    <div class="article-source" id="art-source"></div>
+  </div>
+  <div class="article-img" id="art-img"></div>
+  <div class="article-content">
+    <div class="article-tag" id="art-tag"></div>
+    <div class="article-title" id="art-title"></div>
+    <div class="article-meta" id="art-meta"></div>
+    <div class="article-body" id="art-body"></div>
+    <a class="read-more-btn" id="art-link" target="_blank">Читати повністю →</a>
+  </div>
+</div>
+
+<script>
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+  tg.setHeaderColor('#0f0f0f');
+}
+
+const API = window.location.origin;
+const userId = tg?.initDataUnsafe?.user?.id;
+
+const TOPIC_META = {
+  world:    { emoji: '🌍', name: 'Світові новини', tagClass: 'tag-world' },
+  ukraine:  { emoji: '🇺🇦', name: 'Україна',       tagClass: 'tag-ukraine' },
+  military: { emoji: '⚔️',  name: 'Військо',        tagClass: 'tag-military' },
+  tech:     { emoji: '💻', name: 'Технології',      tagClass: 'tag-tech' },
+  business: { emoji: '📈', name: 'Бізнес',          tagClass: 'tag-business' },
+  science:  { emoji: '🔬', name: 'Наука',           tagClass: 'tag-science' },
+  sport:    { emoji: '⚽', name: 'Спорт',           tagClass: 'tag-sport' },
+  usa:      { emoji: '🇺🇸', name: 'США та політика', tagClass: 'tag-usa' },
+};
+
+let currentTopicFilter = 'all';
+let allNews = [];
+let userTopics = [];
+let isPremium = false;
+let saved = JSON.parse(localStorage.getItem('saved') || '[]');
+let currentArticle = null;
+
+function formatDate(d) {
+  const now = new Date();
+  const diff = Math.floor((now - d) / 60000);
+  if (diff < 1) return 'щойно';
+  if (diff < 60) return `${diff} хв тому`;
+  const h = Math.floor(diff / 60);
+  if (h < 24) return `${h} год тому`;
+  return `${Math.floor(h/24)} дн тому`;
+}
+
+function getTagClass(topic) { return TOPIC_META[topic]?.tagClass || 'tag-world'; }
+function getEmoji(topic)    { return TOPIC_META[topic]?.emoji || '📰'; }
+function getTopicName(topic){ return TOPIC_META[topic]?.name || topic; }
+
+async function loadUserState() {
+  try {
+    const r = await fetch(`${API}/api/user?chat_id=${userId}`);
+    if (!r.ok) throw new Error();
+    const d = await r.json();
+    userTopics = d.topics || ['world','ukraine'];
+    isPremium  = d.is_premium || false;
+  } catch {
+    userTopics = ['world','ukraine'];
+  }
+}
+
+async function loadNews(topic = 'all') {
+  const el = document.getElementById('feed-content');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div><div class="loading-text">Завантажуємо…</div></div>';
+  try {
+    const url = topic === 'all'
+      ? `${API}/api/news?chat_id=${userId}&limit=30`
+      : `${API}/api/news?chat_id=${userId}&topic=${topic}&limit=20`;
+    const r = await fetch(url);
+    if (!r.ok) throw new Error();
+    allNews = await r.json();
+    renderFeed(allNews, topic === 'all');
+  } catch(e) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">⚡</div><div class="empty-text">Не вдалося завантажити</div><div class="empty-sub">Перевір з'єднання</div></div>`;
+  }
+}
+
+function renderFeed(news, showPremiumBanner) {
+  const el = document.getElementById('feed-content');
+  if (!news.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">Новин поки немає</div><div class="empty-sub">Перевір налаштування тем</div></div>`;
+    return;
+  }
+
+  let html = '';
+  const [first, ...rest] = news;
+
+  html += cardBig(first);
+  if (showPremiumBanner && !isPremium) {
+    html += `<div class="premium-banner" onclick="showTab('settings')">
+      <div class="premium-icon">⭐</div>
+      <div class="premium-text"><div class="premium-title">Преміум — всі 8 тем</div><div class="premium-desc">Наука, спорт, бізнес та ще більше</div></div>
+      <div class="premium-btn">100 Stars</div>
+    </div>`;
+  }
+  html += `<div class="section-label">Сьогодні</div>`;
+  rest.forEach(n => { html += cardSmall(n); });
+
+  el.innerHTML = html;
+}
+
+function cardBig(n) {
+  const tc = getTagClass(n.topic);
+  const em = getEmoji(n.topic);
+  const tn = getTopicName(n.topic);
+  const img = n.image_url
+    ? `<img src="${n.image_url}" loading="lazy" onerror="this.parentNode.innerHTML='<div class=card-img-fallback>${em}</div>'">`
+    : `<div class="card-img-fallback">${em}</div>`;
+  return `<div class="card-big" onclick="openArticle(${n.id})">
+    <div class="card-img">${img}<div class="tag ${tc}">${tn}</div></div>
+    <div class="card-body">
+      <div class="card-title">${n.title}</div>
+      <div class="card-desc">${n.summary || ''}</div>
+      <div class="card-meta"><div class="card-time">${formatDate(new Date(n.created_at))}</div><div class="card-source">${n.source || ''}</div></div>
+    </div>
+  </div>`;
+}
+
+function cardSmall(n) {
+  const tc = getTagClass(n.topic);
+  const em = getEmoji(n.topic);
+  const tn = getTopicName(n.topic);
+  const thumb = n.image_url
+    ? `<img src="${n.image_url}" loading="lazy" onerror="this.parentNode.innerHTML='<div class=card-thumb-fallback>${em}</div>'">`
+    : `<div class="card-thumb-fallback">${em}</div>`;
+  return `<div class="card-small" onclick="openArticle(${n.id})">
+    <div class="card-small-inner">
+      <div class="card-thumb">${thumb}</div>
+      <div class="card-small-content">
+        <div class="card-small-tag ${tc}">${tn}</div>
+        <div class="card-small-title">${n.title}</div>
+        <div class="card-small-meta">${formatDate(new Date(n.created_at))} · ${n.source || ''}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function openArticle(id) {
+  const n = allNews.find(x => x.id === id);
+  if (!n) return;
+  currentArticle = n;
+  const tc = getTagClass(n.topic);
+  const tn = getTopicName(n.topic);
+  const em = getEmoji(n.topic);
+
+  document.getElementById('art-source').textContent = n.source || '';
+  const imgEl = document.getElementById('art-img');
+  imgEl.innerHTML = n.image_url
+    ? `<img src="${n.image_url}" loading="lazy" onerror="this.innerHTML='<div style=font-size:40px;opacity:.3>${em}</div>'">`
+    : `<div style="font-size:40px;opacity:.3">${em}</div>`;
+
+  const tagEl = document.getElementById('art-tag');
+  tagEl.textContent = tn;
+  tagEl.className = `article-tag ${tc}`;
+  document.getElementById('art-title').textContent = n.title;
+  document.getElementById('art-meta').textContent = formatDate(new Date(n.created_at));
+  const body = n.body || n.summary || '';
+  document.getElementById('art-body').innerHTML = body.split('\n').filter(Boolean).map(p=>`<p>${p}</p>`).join('');
+  const link = document.getElementById('art-link');
+  if (n.url) { link.href = n.url; link.style.display = 'block'; }
+  else link.style.display = 'none';
+
+  document.getElementById('article-view').classList.add('open');
+  tg?.BackButton?.show();
+  tg?.BackButton?.onClick(closeArticle);
+}
+
+function closeArticle() {
+  document.getElementById('article-view').classList.remove('open');
+  tg?.BackButton?.hide();
+}
+
+function buildTabs() {
+  const bar = document.getElementById('tabs-bar');
+  const topics = ['all', ...userTopics];
+  const labels = { all: 'Всі' };
+  userTopics.forEach(t => { labels[t] = `${getEmoji(t)} ${getTopicName(t)}`; });
+  bar.innerHTML = topics.map(t => `<button class="tab${t==='all'?' active':''}" data-topic="${t}" onclick="switchTopic('${t}',this)">${labels[t]||t}</button>`).join('');
+}
+
+function switchTopic(topic, btn) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  currentTopicFilter = topic;
+  loadNews(topic);
+}
+
+function showTab(tab) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  ['feed','saved','settings'].forEach(t=>{
+    document.getElementById(`nav-${t}`)?.classList.remove('active');
+    const tabsWrap = document.getElementById('tabs-wrap');
+    const feedPanel = document.getElementById('feed-panel');
+    if(tabsWrap) tabsWrap.style.display = tab==='feed' ? 'block' : 'none';
+    if(feedPanel) feedPanel.style.display = tab==='feed' ? 'block' : 'none';
+  });
+  document.getElementById(`nav-${tab}`)?.classList.add('active');
+  if(tab === 'feed') {
+    document.getElementById('tabs-wrap').style.display = 'block';
+    document.getElementById('feed-panel').style.display = 'block';
+  } else {
+    document.getElementById('tabs-wrap').style.display = 'none';
+    document.getElementById('feed-panel').style.display = 'none';
+    document.getElementById(`${tab}-panel`)?.classList.add('active');
+    if(tab === 'settings') renderSettings();
+    if(tab === 'saved') renderSaved();
+  }
+}
+
+function renderSettings() {
+  const grid = document.getElementById('topics-grid');
+  const allTopics = Object.keys(TOPIC_META);
+  grid.innerHTML = allTopics.map(t => {
+    const sel = userTopics.includes(t);
+    const locked = !isPremium && !sel && userTopics.length >= 2;
+    return `<div class="topic-card${sel?' selected':''}" onclick="toggleTopic('${t}',this)" data-topic="${t}" ${locked?'style=opacity:.45':''}>
+      <div class="topic-emoji">${getEmoji(t)}</div>
+      <div class="topic-name">${getTopicName(t)}</div>
+    </div>`;
+  }).join('');
+  updateLimitMsg();
+}
+
+function toggleTopic(t, el) {
+  const idx = userTopics.indexOf(t);
+  if (idx > -1) {
+    if (userTopics.length <= 1) return;
+    userTopics.splice(idx, 1);
+    el.classList.remove('selected');
+  } else {
+    if (!isPremium && userTopics.length >= 2) {
+      tg?.showAlert('Безкоштовно доступно 2 теми. Оформіть преміум для більшого.');
+      return;
+    }
+    userTopics.push(t);
+    el.classList.add('selected');
+  }
+  updateLimitMsg();
+}
+
+function updateLimitMsg() {
+  const msg = document.getElementById('topics-limit-msg');
+  if (isPremium) msg.textContent = '⭐ Преміум — всі теми доступні';
+  else msg.textContent = `Обрано ${userTopics.length}/2 безкоштовних тем`;
+}
+
+async function saveTopics() {
+  try {
+    await fetch(`${API}/api/topics`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ chat_id: userId, topics: userTopics })
+    });
+    tg?.showToast?.('Збережено!');
+    buildTabs();
+    showTab('feed');
+    loadNews('all');
+  } catch {
+    tg?.showAlert('Помилка збереження');
+  }
+}
+
+function renderSaved() {
+  const list = document.getElementById('saved-list');
+  if (!saved.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">🔖</div><div class="empty-text">Немає збережених</div><div class="empty-sub">Натисни і збережи статтю</div></div>`;
+    return;
+  }
+  list.innerHTML = saved.map(n => cardSmall(n)).join('');
+}
+
+function setDate() {
+  const d = new Date();
+  const days = ['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
+  const months = ['січ','лют','бер','кві','тра','чер','лип','сер','вер','жов','лис','гру'];
+  document.getElementById('header-date').textContent = `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]}`;
+}
+
+async function init() {
+  setDate();
+  await loadUserState();
+  buildTabs();
+  loadNews('all');
+}
+
+init();
+</script>
+</body>
+</html>
