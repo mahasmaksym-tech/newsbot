@@ -78,27 +78,27 @@ async def cmd_start(update,ctx):
     sel=get_topics(u.id)
     if not sel:set_topics(u.id,["world","ukraine"]);sel=["world","ukraine"]
     prem=is_premium(u.id)
-    await update.message.reply_text(f"👋 Привіт, {u.first_name}\!\n\nЯ надсилатиму щоденний *новинний брифінг* з посиланнями\.\n\nОбери теми 👇\n_{'⭐ Преміум активний' if prem else f'Безкоштовно: до {FREE_TOPICS_LIMIT} тем'}_",parse_mode="MarkdownV2",reply_markup=kb(sel,prem))
+    await update.message.reply_text(f"👋 Привіт, {u.first_name}\!\n\nЯ надсилатиму щоденний *новинний брифінг* з посиланнями\.\n\nОбери теми 👇\n_{'⭐ Преміум активний' if prem else f'Безкоштовно: до {FREE_TOPICS_LIMIT} тем'}_",parse_mode="HTML",reply_markup=kb(sel,prem))
 
 async def cmd_settings(update,ctx):
     u=update.effective_user;upsert_user(u.id,u.username,u.first_name)
-    await update.message.reply_text("⚙️ *Налаштування тем*",parse_mode="MarkdownV2",reply_markup=kb(get_topics(u.id),is_premium(u.id)))
+    await update.message.reply_text("⚙️ *Налаштування тем*",parse_mode="HTML",reply_markup=kb(get_topics(u.id),is_premium(u.id)))
 
 async def cmd_now(update,ctx):
     topics=get_topics(update.effective_user.id)
     if not topics:await update.message.reply_text("Спочатку обери теми: /settings");return
-    msg=await update.message.reply_text("🔍 Збираю новини, зачекай ~30 сек\.\.\.",parse_mode="MarkdownV2")
+    msg=await update.message.reply_text("🔍 Збираю новини, зачекай ~30 сек\.\.\.",parse_mode="HTML")
     try:
         b=fetch_briefing(topics);await msg.delete()
         for chunk in[b[i:i+4000]for i in range(0,len(b),4000)]:
-            await update.message.reply_text(chunk,parse_mode="MarkdownV2",disable_web_page_preview=False)
+            await update.message.reply_text(chunk,parse_mode="HTML",disable_web_page_preview=False)
     except Exception as e:await msg.edit_text(f"❌ Помилка: {e}")
 
 async def cmd_status(update,ctx):
     uid=update.effective_user.id;topics=get_topics(uid);prem=is_premium(uid);user=get_user(uid)
     tlist="\n".join(f"• {ALL_TOPICS[t][0]} {ALL_TOPICS[t][1]}"for t in topics if t in ALL_TOPICS)or"немає"
     status=f"⭐ Преміум до {user['premium_until']}"if prem else f"Безкоштовний \({FREE_TOPICS_LIMIT} теми\)"
-    await update.message.reply_text(f"📊 *Статус*\n\n{status}\n\n*Теми:*\n{tlist}\n\nБрифінг о {SEND_HOUR}:00 UTC \(~{SEND_HOUR+3}:00 Київ\)",parse_mode="MarkdownV2")
+    await update.message.reply_text(f"📊 *Статус*\n\n{status}\n\n*Теми:*\n{tlist}\n\nБрифінг о {SEND_HOUR}:00 UTC \(~{SEND_HOUR+3}:00 Київ\)",parse_mode="HTML")
 
 async def on_callback(update,ctx):
     q=update.callback_query;await q.answer();uid=q.from_user.id;data=q.data
@@ -112,7 +112,7 @@ async def on_callback(update,ctx):
         sel=get_topics(uid)
         if not sel:await q.answer("Обери хоча б одну тему\!",show_alert=True);return
         labels=", ".join(f"{ALL_TOPICS[t][0]} {ALL_TOPICS[t][1]}"for t in sel if t in ALL_TOPICS)
-        await q.edit_message_text(f"✅ *Збережено\!*\n\nТеми: {labels}\n\nБрифінг щодня о {SEND_HOUR}:00 UTC\n\nОтримати зараз: /now",parse_mode="MarkdownV2")
+        await q.edit_message_text(f"✅ *Збережено\!*\n\nТеми: {labels}\n\nБрифінг щодня о {SEND_HOUR}:00 UTC\n\nОтримати зараз: /now",parse_mode="HTML")
     elif data=="buy_premium":
         await ctx.bot.send_invoice(chat_id=uid,title="⭐ News Brief Premium",description="Всі 8 тем без обмежень",payload="premium_1month",currency="XTR",prices=[{"label":"Преміум на місяць","amount":STARS_PRICE}],provider_token="")
 
@@ -120,7 +120,7 @@ async def precheckout(update,ctx):await update.pre_checkout_query.answer(ok=True
 
 async def paid(update,ctx):
     set_premium(update.effective_user.id,30)
-    await update.message.reply_text("⭐ *Преміум активовано на 30 днів\!*\n\nОбирай будь\-які теми: /settings",parse_mode="MarkdownV2")
+    await update.message.reply_text("⭐ *Преміум активовано на 30 днів\!*\n\nОбирай будь\-які теми: /settings",parse_mode="HTML")
 
 async def daily(app):
     for row in get_all_active():
@@ -129,7 +129,7 @@ async def daily(app):
         try:
             b=fetch_briefing(topics)
             for chunk in[b[i:i+4000]for i in range(0,len(b),4000)]:
-                await app.bot.send_message(chat_id=cid,text=chunk,parse_mode="MarkdownV2",disable_web_page_preview=False)
+                await app.bot.send_message(chat_id=cid,text=chunk,parse_mode="HTML",disable_web_page_preview=False)
             await asyncio.sleep(1)
         except Exception as e:print(f"Err {cid}: {e}")
 
